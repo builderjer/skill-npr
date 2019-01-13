@@ -14,6 +14,8 @@
 
 # Personal version
 # builderjer@github.com 
+# Going to try and expand the usage to include several news casts
+
 
 import feedparser
 import re
