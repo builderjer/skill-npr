@@ -50,21 +50,33 @@ class NewsSkill(CommonPlaySkill):
 
     def CPS_start(self, phrase, data):
         # Use the "latest news" intent handler
-        self.handle_latest_news(None)
+        
+        #################################################
+        # My code
+        # builderjer@github.com 
+        
+        self.handle_latest_news(phrase.lower())
+        #self.handle_latest_news(None)  # I commented this out
 
     @property
     def url_rss(self):
-        pre_select = self.settings.get("pre_select", "")
-        url_rss = self.settings.get("url_rss")
-        if "not_set" in pre_select:
-            # Use a custom RSS URL
-            url_rss = self.settings.get("url_rss")
+        #################################################
+        new_url = self.settings.get("new_url")
+        if new_url:
+            url_rss = new_url
         else:
-            # Use the selected preset's URL
-            url_rss = pre_select
+            pre_select = self.settings.get("pre_select", "")
+            url_rss = self.settings.get("url_rss")
+            if "not_set" in pre_select:
+                # Use a custom RSS URL
+                url_rss = self.settings.get("url_rss")
+            else:
+                # Use the selected preset's URL
+                url_rss = pre_select
 
-        if not url_rss and 'url_rss' in self.config:
-            url_rss = self.config['url_rss']
+            if not url_rss and 'url_rss' in self.config:
+                url_rss = self.config['url_rss']
+        ##################################################
 
         data = feedparser.parse(url_rss.strip())
         # After the intro, find and start the news stream
@@ -83,7 +95,14 @@ class NewsSkill(CommonPlaySkill):
     def handle_latest_news(self, message):
         try:
             self.stop()
-
+            
+            ###########################################
+            # My code
+            # builderjer@github.com 
+            
+            new_url = self.get_url(message.data["News"])
+            
+            ###########################################
             mime = find_mime(self.url_rss)
             # (Re)create Fifo
             if os.path.exists(STREAM):
@@ -114,7 +133,29 @@ class NewsSkill(CommonPlaySkill):
                 self.log.error('Could not stop curl: {}'.format(repr(e)))
             finally:
                 self.curl = None
-
+                
+    ######################################################
+    # My code 
+    # builderjer@github
+    ######################################################
+    
+    def get_url(self, message):
+        message = message.lower()
+        # Hack to make this work.  Not sure its a hack though just don't know another way
+        if message == "national public radio" or message == "npr news":
+            message = "npr"
+        if message == "bbc news":
+            message = "bbc"
+        self.log.info(message)
+        newsStreams = self.settings.get("news_streams")
+        self.log.info(message)
+        if message in newsStreams:
+            self.log.info(newsStreams[message])
+            self.settings["new_url"] = newsStreams[message]
+            return newsStreams[message]
+        else:
+            self.settings["new_url"] = None
+        
 
 def create_skill():
     return NewsSkill()
